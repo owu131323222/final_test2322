@@ -66,7 +66,7 @@ elif os.name == 'posix':  # macOSやLinux (Streamlit Cloud含む) の場合
                 raise ValueError("Noto Sans CJK JP not found")
         except (ValueError, RuntimeError):
             # どちらのフォントも見つからなかった場合
-            st.warning("日本語フォントが見つかりませんでした。デフォルトフォントを使用します。")
+            
             plt.rcParams['font.family'] = 'sans-serif'
 else:  # その他のOS
     st.warning("日本語フォントが見つかりませんでした。デフォルトフォントを使用します。")
