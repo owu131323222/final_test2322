@@ -53,14 +53,14 @@ elif os.name == 'posix':
    
             
             plt.rcParams['font.family'] = 'sans-serif'
-else:  # その他のOS
+else: 
     plt.rcParams['font.family'] = 'sans-serif'  
 
-# --- SQLiteデータベースの初期化 ---
+
 def init_db():
     conn = sqlite3.connect("learning_log.db")
     cursor = conn.cursor()
-    # テーブルが存在しない場合に作成
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS learning_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,8 +72,7 @@ def init_db():
         )
     """)
     conn.commit()
-
-    # study_time カラムが存在するかチェックし、なければ追加する
+    
     try:
         cursor.execute("SELECT study_time FROM learning_log LIMIT 1")
     except sqlite3.OperationalError:
@@ -96,7 +95,6 @@ def load_data_from_db():
     df = pd.read_sql_query("SELECT * FROM learning_log", conn)
     conn.close()
     
-    # カラム名を日本語にリネーム
     df.rename(columns={"subject": "科目", "score": "理解度", "study_time": "学習時間(分)"}, inplace=True)
     df['date'] = pd.to_datetime(df['date'])
     return df
@@ -291,7 +289,7 @@ with st.sidebar:
     st.write("🎨 芸術/デザイン")
     st.write("その他")
     st.markdown("---")
-    st.caption("© 2024 Your Name. 大妻女子大学 社会情報学部 WebプログラミングI")
+
 
 # タブを使ったレイアウトで各機能を整理
 tab1, tab2, tab3 = st.tabs(["📝 記録・追加", "📊 進捗確認", "🤖 AIアドバイス"])
