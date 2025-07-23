@@ -32,17 +32,44 @@ st.set_page_config(
 )
 
 # 日本語フォント指定（クロスプラットフォーム対応）
+# Matplotlibのキャッシュをクリアする
+# これにより、フォント設定が変更された際に正しく適用される可能性が高まります。
+plt.rcParams['font.sans-serif'] = ['IPAexGothic', 'Noto Sans CJK JP', 'Yu Gothic', 'Meiryo', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False # 負の符号が四角になるのを防ぐ
+
 if os.name == "nt":  # Windowsの場合
     plt.rcParams['font.family'] = 'Yu Gothic'
 elif os.name == 'posix':  # macOSやLinux (Streamlit Cloud含む) の場合
-    if fm.findfont('IPAexGothic', fallback_to_default=False):
-        plt.rcParams['font.family'] = 'IPAexGothic'
-    elif fm.findfont('Noto Sans CJK JP', fallback_to_default=False):
-        plt.rcParams['font.family'] = 'Noto Sans CJK JP'
-    else:
-        st.warning("日本語フォントが見つかりませんでした。デフォルトフォントを使用します。")
-        plt.rcParams['font.family'] = 'sans-serif'
+    # 優先順位を考慮してフォントを設定
+    # findfont()で個別にチェックするのではなく、font.familyリストに複数指定し、
+    # Matplotlibに自動で最適なものを選ばせる方が堅牢です。
+    # ただし、特定のフォントが見つからない場合にエラーを出さないようにするため、
+    # 既存のロジックをtry-exceptで囲むことも有効です。
+    
+    # IPAexGothicを試みる
+    try:
+        # fallback_to_default=Falseはエラーをスローするため、
+        # まずは単純にfont.familyに追加する形で試すか、
+        # 例外処理で堅牢にする
+        if fm.findfont('IPAexGothic', fallback_to_default=False):
+            plt.rcParams['font.family'] = 'IPAexGothic'
+        else:
+            # IPAexGothicが見つからなかった場合、別のフォントを試すためのフラグ
+            raise ValueError("IPAexGothic not found")
+    except (ValueError, RuntimeError): # fm.findfontがエラーをスローした場合
+        try:
+            # Noto Sans CJK JPを試す
+            if fm.findfont('Noto Sans CJK JP', fallback_to_default=False):
+                plt.rcParams['font.family'] = 'Noto Sans CJK JP'
+            else:
+                # Noto Sans CJK JPも見つからなかった場合
+                raise ValueError("Noto Sans CJK JP not found")
+        except (ValueError, RuntimeError):
+            # どちらのフォントも見つからなかった場合
+            st.warning("日本語フォントが見つかりませんでした。デフォルトフォントを使用します。")
+            plt.rcParams['font.family'] = 'sans-serif'
 else:  # その他のOS
+    st.warning("日本語フォントが見つかりませんでした。デフォルトフォントを使用します。")
     plt.rcParams['font.family'] = 'sans-serif'  # デフォルトフォントを使用
 
 # --- SQLiteデータベースの初期化 ---
@@ -332,4 +359,3 @@ if st.button("🔴 全記録を完全にクリアする", key="clear_all_button"
         st.rerun()  # 画面を再描画して変更を反映
     else:
         st.info("記録の削除はキャンセルされました。")
-
