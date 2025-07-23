@@ -20,41 +20,37 @@ API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-fl
 # アプリ全体のページ設定とテーマ調整
 st.set_page_config(
     page_title="学習進捗トラッカー",
-    layout="wide", 
-    initial_sidebar_state="expanded",  
+    layout="wide",
+    initial_sidebar_state="expanded",
     # ▼ここにカラーテーマのカスタマイズを追加できます（任意）
-    # primaryColor="#4CAF50",  # メインカラー（例: 落ち着いたグリーン）
-    # backgroundColor="#F0F2F6",  # 背景色（明るいグレーで目に優しい）
-    # secondaryBackgroundColor="#E0E5EC",  # サブ背景色（セクションの区切りなどに）
-    # textColor="#333333",  # テキスト色（読みやすい濃い色）
-    # font="sans serif"  # フォント
+    # primaryColor="#4CAF50",   # メインカラー（例: 落ち着いたグリーン）
+    # backgroundColor="#F0F2F6",   # 背景色（明るいグレーで目に優しい）
+    # secondaryBackgroundColor="#E0E5EC",   # サブ背景色（セクションの区切りなどに）
+    # textColor="#333333",   # テキスト色（読みやすい濃い色）
+    # font="sans serif"   # フォント
 )
 
 plt.rcParams['font.sans-serif'] = ['IPAexGothic', 'Noto Sans CJK JP', 'Yu Gothic', 'Meiryo', 'Arial Unicode MS']
 plt.rcParams['axes.unicode_minus'] = False
 
-if os.name == "nt":  
+if os.name == "nt":
     plt.rcParams['font.family'] = 'Yu Gothic'
-elif os.name == 'posix': 
+elif os.name == 'posix':
     try:
         if fm.findfont('IPAexGothic', fallback_to_default=False):
             plt.rcParams['font.family'] = 'IPAexGothic'
         else:
             raise ValueError("IPAexGothic not found")
-    except (ValueError, RuntimeError): 
+    except (ValueError, RuntimeError):
         try:
-          
             if fm.findfont('Noto Sans CJK JP', fallback_to_default=False):
                 plt.rcParams['font.family'] = 'Noto Sans CJK JP'
             else:
-               
                 raise ValueError("Noto Sans CJK JP not found")
         except (ValueError, RuntimeError):
-   
-            
             plt.rcParams['font.family'] = 'sans-serif'
-else: 
-    plt.rcParams['font.family'] = 'sans-serif'  
+else:
+    plt.rcParams['font.family'] = 'sans-serif'
 
 
 def init_db():
@@ -72,7 +68,7 @@ def init_db():
         )
     """)
     conn.commit()
-    
+
     try:
         cursor.execute("SELECT study_time FROM learning_log LIMIT 1")
     except sqlite3.OperationalError:
@@ -94,7 +90,7 @@ def load_data_from_db():
     conn = sqlite3.connect("learning_log.db")
     df = pd.read_sql_query("SELECT * FROM learning_log", conn)
     conn.close()
-    
+
     df.rename(columns={"subject": "科目", "score": "理解度", "study_time": "学習時間(分)"}, inplace=True)
     df['date'] = pd.to_datetime(df['date'])
     return df
@@ -113,10 +109,10 @@ def input_section():
         col1, col2 = st.columns(2)
         with col1:
             date = st.date_input("🗓️ 学習日", value=datetime.now().date())
-            
+
             subject_options = ["IT/プログラミング", "ビジネス/経済", "語学", "人文科学", "自然科学", "芸術/デザイン", "その他 (自由記述)"]
             selected_subject = st.selectbox("📚 科目を選択", subject_options)
-            
+
             subject_to_save = selected_subject
             if selected_subject == "その他 (自由記述)":
                 custom_subject = st.text_input("💡 その他の科目を入力してください (例: 心理学、料理)")
@@ -141,12 +137,14 @@ def input_section():
             st.warning("科目を選択または入力してください。")
         else:
             save_data_to_db(date, subject_to_save, topic, score, study_time)
-            st.session_state.df = load_data_from_db()
+            st.session_state.df = load_data_from_db() # データの更新
             if selected_subject == "その他 (自由記述)" and subject_to_save:
                 st.success(f"✅ 記録を追加しました！科目「**{subject_to_save}**」の内容が保存されました。")
             else:
                 st.success("✅ 記録を追加しました！")
-            st.experimental_rerun() # 画面を再描画して最新のデータを表示
+            # ここにあった st.experimental_rerun() は削除しました。
+            # st.form の submit_button が自動的にアプリを再実行するため、
+            # 明示的な再実行は不要です。
 
 # --- 勉強時間グラフ表示 ---
 def show_progress_chart(df):
@@ -200,7 +198,7 @@ def show_progress_chart(df):
     plt.grid(axis='y', linestyle='--', alpha=0.7) # グリッド線を追加
     plt.tight_layout()
     st.pyplot(fig)
-    
+
 # --- 直近の学習記録を表示 ---
 def show_recent_records(df):
     st.subheader("🔍 直近の学習記録一覧")
@@ -289,6 +287,7 @@ with st.sidebar:
     st.write("🎨 芸術/デザイン")
     st.write("その他")
     st.markdown("---")
+    st.caption("© 2024 Your Name. 大妻女子大学 社会情報学部 WebプログラミングI")
 
 
 # タブを使ったレイアウトで各機能を整理
@@ -310,13 +309,13 @@ with tab3:
         avg_scores_for_suggestion = df_for_ai.groupby("科目")["理解度"].mean()
         if not avg_scores_for_suggestion.empty:
             weakest_subject = avg_scores_for_suggestion.idxmin()
-            
+
             lowest_score_topic = None
             weakest_subject_df = df_for_ai[df_for_ai['科目'] == weakest_subject]
             if not weakest_subject_df.empty:
                 lowest_score_record = weakest_subject_df.loc[weakest_subject_df['理解度'].idxmin()]
                 lowest_score_topic = lowest_score_record['topic']
-                
+
             suggest_tasks(weakest_subject, lowest_score_topic)
         else:
             st.info("まだ科目別の理解度データがありません。")
