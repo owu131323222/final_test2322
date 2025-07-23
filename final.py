@@ -15,14 +15,13 @@ except KeyError:
     API_KEY = None
     st.error("🔐 Gemini APIキーがStreamlit secretsに設定されていません。`secrets.toml`ファイルを確認するか、Streamlit CloudのSecretsを設定してください。")
 
-# Gemini APIのURLを最新の推奨される形式に修正
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 # アプリ全体のページ設定とテーマ調整
 st.set_page_config(
     page_title="学習進捗トラッカー",
-    layout="wide",  # 広々としたレイアウト
-    initial_sidebar_state="expanded",  # サイドバーを初期状態で開く
+    layout="wide", 
+    initial_sidebar_state="expanded",  
     # ▼ここにカラーテーマのカスタマイズを追加できます（任意）
     # primaryColor="#4CAF50",  # メインカラー（例: 落ち着いたグリーン）
     # backgroundColor="#F0F2F6",  # 背景色（明るいグレーで目に優しい）
@@ -31,46 +30,31 @@ st.set_page_config(
     # font="sans serif"  # フォント
 )
 
-# 日本語フォント指定（クロスプラットフォーム対応）
-# Matplotlibのキャッシュをクリアする
-# これにより、フォント設定が変更された際に正しく適用される可能性が高まります。
 plt.rcParams['font.sans-serif'] = ['IPAexGothic', 'Noto Sans CJK JP', 'Yu Gothic', 'Meiryo', 'Arial Unicode MS']
-plt.rcParams['axes.unicode_minus'] = False # 負の符号が四角になるのを防ぐ
+plt.rcParams['axes.unicode_minus'] = False
 
-if os.name == "nt":  # Windowsの場合
+if os.name == "nt":  
     plt.rcParams['font.family'] = 'Yu Gothic'
-elif os.name == 'posix':  # macOSやLinux (Streamlit Cloud含む) の場合
-    # 優先順位を考慮してフォントを設定
-    # findfont()で個別にチェックするのではなく、font.familyリストに複数指定し、
-    # Matplotlibに自動で最適なものを選ばせる方が堅牢です。
-    # ただし、特定のフォントが見つからない場合にエラーを出さないようにするため、
-    # 既存のロジックをtry-exceptで囲むことも有効です。
-    
-    # IPAexGothicを試みる
+elif os.name == 'posix': 
     try:
-        # fallback_to_default=Falseはエラーをスローするため、
-        # まずは単純にfont.familyに追加する形で試すか、
-        # 例外処理で堅牢にする
         if fm.findfont('IPAexGothic', fallback_to_default=False):
             plt.rcParams['font.family'] = 'IPAexGothic'
         else:
-            # IPAexGothicが見つからなかった場合、別のフォントを試すためのフラグ
             raise ValueError("IPAexGothic not found")
-    except (ValueError, RuntimeError): # fm.findfontがエラーをスローした場合
+    except (ValueError, RuntimeError): 
         try:
-            # Noto Sans CJK JPを試す
+          
             if fm.findfont('Noto Sans CJK JP', fallback_to_default=False):
                 plt.rcParams['font.family'] = 'Noto Sans CJK JP'
             else:
-                # Noto Sans CJK JPも見つからなかった場合
+               
                 raise ValueError("Noto Sans CJK JP not found")
         except (ValueError, RuntimeError):
-            # どちらのフォントも見つからなかった場合
+   
             
             plt.rcParams['font.family'] = 'sans-serif'
 else:  # その他のOS
-    st.warning("日本語フォントが見つかりませんでした。デフォルトフォントを使用します。")
-    plt.rcParams['font.family'] = 'sans-serif'  # デフォルトフォントを使用
+    plt.rcParams['font.family'] = 'sans-serif'  
 
 # --- SQLiteデータベースの初期化 ---
 def init_db():
