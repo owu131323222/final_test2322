@@ -127,7 +127,7 @@ def input_section():
                     subject_to_save = None
 
         with col2:
-            topic = st.text_input("📖 学習内容/テーマ (例: Streamlitのレイアウト、TOEIC単語50個、経済学の基礎)")
+            topic = st.text_input("📖 学習内容/テーマ (例: TOEIC単語50個、経済学)")
             score = st.slider("✨ 理解度 (1: 🤔まだ難しい 〜 5: 🎉バッチリ理解！)", min_value=1, max_value=5)
             study_time = st.number_input("⏰ 学習時間 (分)", min_value=0, value=60, step=5)
 
